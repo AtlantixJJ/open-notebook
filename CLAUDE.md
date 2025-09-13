@@ -11,6 +11,7 @@ Open Notebook is an open source, privacy-focused alternative to Google's Noteboo
 - 🎙️ **Professional Podcast Generation**: Advanced multi-speaker podcasts with Episode Profiles
 - 🔍 **Intelligent Search**: Full-text and vector search across all your content
 - 💬 **Context-Aware Chat**: AI conversations powered by your research materials
+- ⚡ **AI Transformations**: Custom text processing operations with reusable prompts
 - 🔧 **REST API**: Full programmatic access for custom integrations
 
 ## Installation Guide
@@ -229,15 +230,108 @@ SURREAL_DATABASE="staging"
 | DeepSeek     | ✅          | ❌               | ❌             | ❌             |
 | Mistral      | ✅          | ✅               | ❌             | ❌             |
 
+openrouter/sonoma-dusk-alpha
+openrouter/sonoma-sky-alpha
+text-embedding-3-small
+
 ## Project Structure
 
 - `app_home.py` - Main Streamlit application entry point
 - `api/` - FastAPI backend implementation
+  - `routers/transformations.py` - AI text transformation endpoints
+  - `models.py` - API request/response models
 - `open_notebook/` - Core application modules
 - `commands/` - Background worker commands
 - `pages/` - Streamlit page components
 - `migrations/` - Database migration scripts
 - `.env` - Environment configuration (created during setup)
+
+## API Usage
+
+### Transformations API
+
+The `/api/transformations` endpoints enable AI-powered text processing operations:
+
+#### Available Endpoints
+
+**GET /api/transformations**
+- List all available transformations
+- Returns: Array of transformation objects with id, name, title, description, prompt, and metadata
+
+**POST /api/transformations**
+- Create a new transformation template
+- Body:
+  ```json
+  {
+    "name": "summarize",
+    "title": "Text Summarization",
+    "description": "Summarizes long text into key points",
+    "prompt": "Summarize the following text in 3-5 bullet points: {input_text}",
+    "apply_default": false
+  }
+  ```
+
+**GET /api/transformations/{id}**
+- Get specific transformation details
+- Returns: Single transformation object
+
+**PUT /api/transformations/{id}**
+- Update existing transformation (partial updates supported)
+- Body: Same as POST, but all fields optional
+
+**DELETE /api/transformations/{id}**
+- Delete transformation
+- Returns: Success confirmation
+
+**POST /api/transformations/execute**
+- Execute a transformation on input text
+- Body:
+  ```json
+  {
+    "transformation_id": "transformation-uuid",
+    "input_text": "Your text to process",
+    "model_id": "model-uuid"
+  }
+  ```
+- Returns:
+  ```json
+  {
+    "output": "AI-processed result",
+    "transformation_id": "transformation-uuid",
+    "model_id": "model-uuid"
+  }
+  ```
+
+#### Example Usage
+
+```bash
+# Create a summarization transformation
+curl -X POST http://localhost:5055/api/transformations \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "summarize",
+    "title": "Document Summarizer",
+    "description": "Creates concise summaries of documents",
+    "prompt": "Please summarize this text in 2-3 sentences: {input_text}",
+    "apply_default": false
+  }'
+
+# Execute the transformation
+curl -X POST http://localhost:5055/api/transformations/execute \
+  -H "Content-Type: application/json" \
+  -d '{
+    "transformation_id": "your-transformation-id",
+    "input_text": "Long document text here...",
+    "model_id": "your-model-id"
+  }'
+```
+
+#### Integration with AI Models
+
+- Transformations use the configured AI models (OpenAI, Anthropic, Ollama, etc.)
+- Model selection happens via the `model_id` parameter during execution
+- Prompts support variable substitution with `{input_text}` placeholder
+- Processing handled by LangChain integration for reliable AI operations
 
 ## Troubleshooting
 
